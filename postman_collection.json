@@ -1,0 +1,378 @@
+{
+  "info": {
+    "name": "Agentic AI Python Backend",
+    "description": "Unified Python backend for Agentic AI Platform",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:9000",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.access_token) {",
+                  "    pm.collectionVariables.set('accessToken', jsonData.access_token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"your_password\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/auth/login"
+          }
+        },
+        {
+          "name": "Register",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"password\": \"securepassword123\",\n  \"phone\": \"+1234567890\",\n  \"country_code\": \"US\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/auth/register"
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/v1/auth/logout"
+          }
+        },
+        {
+          "name": "Resend Verification Email",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/email/verify/resend?email=user@example.com",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "email", "verify", "resend"],
+              "query": [{ "key": "email", "value": "user@example.com" }]
+            }
+          }
+        },
+        {
+          "name": "Verify Email",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v1/auth/email/verify/:user_id/:hash",
+            "variable": [
+              { "key": "user_id", "value": "" },
+              { "key": "hash", "value": "" }
+            ]
+          }
+        },
+        {
+          "name": "Forgot Password",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/auth/password/forgot"
+          }
+        },
+        {
+          "name": "Update Password",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"reset_token\",\n  \"email\": \"user@example.com\",\n  \"password\": \"newpassword123\",\n  \"password_confirmation\": \"newpassword123\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/auth/password/update"
+          }
+        },
+        {
+          "name": "Social Redirect",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"provider\": \"google\",\n  \"access_token\": \"oauth_token\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/auth/social/redirect"
+          }
+        },
+        {
+          "name": "Social Callback",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"provider\": \"google\",\n  \"access_token\": \"oauth_token\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/auth/social/callback"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "List Users",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/user/list?page=1&per_page=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "user", "list"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "per_page", "value": "20" },
+                { "key": "search", "value": "", "disabled": true },
+                { "key": "status", "value": "", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get User",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v1/user/get/:user_id",
+            "variable": [{ "key": "user_id", "value": "" }]
+          }
+        },
+        {
+          "name": "Create User",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"New User\",\n  \"email\": \"newuser@example.com\",\n  \"password\": \"password123\",\n  \"phone\": \"+1234567890\",\n  \"country_code\": \"US\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/user/create"
+          }
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Name\",\n  \"phone\": \"+1234567890\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/user/update/:user_id",
+            "variable": [{ "key": "user_id", "value": "" }]
+          }
+        },
+        {
+          "name": "Delete User",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/v1/user/delete/:user_id",
+            "variable": [{ "key": "user_id", "value": "" }]
+          }
+        },
+        {
+          "name": "Toggle User Status",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/api/v1/user/toggle-status/:user_id",
+            "variable": [{ "key": "user_id", "value": "" }]
+          }
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Name\",\n  \"phone\": \"+1234567890\",\n  \"country_code\": \"US\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/user/profile/update/:user_id",
+            "variable": [{ "key": "user_id", "value": "" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tenants",
+      "item": [
+        {
+          "name": "List Tenants",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v1/tenant/list"
+          }
+        },
+        {
+          "name": "Get Tenant",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v1/tenant/get/:tenant_id",
+            "variable": [{ "key": "tenant_id", "value": "" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Agents",
+      "item": [
+        {
+          "name": "List Agents",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v1/agents/list"
+          }
+        },
+        {
+          "name": "Get Agent",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v1/agents/get/:agent_id",
+            "variable": [{ "key": "agent_id", "value": "" }]
+          }
+        },
+        {
+          "name": "Create Agent",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"My Agent\",\n  \"display_name\": \"Customer Support Agent\",\n  \"type\": \"chatbot\",\n  \"description\": \"A helpful customer support agent\",\n  \"settings\": {\n    \"llm_provider\": \"openai\",\n    \"llm_model\": \"gpt-4\",\n    \"temperature\": \"0.7\",\n    \"max_tokens\": \"2048\",\n    \"system_prompt\": \"You are a helpful assistant.\",\n    \"welcome_message\": \"Hello! How can I help you today?\"\n  }\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/agents/create"
+          }
+        },
+        {
+          "name": "Update Agent",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Agent Name\",\n  \"description\": \"Updated description\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/agents/update/:agent_id",
+            "variable": [{ "key": "agent_id", "value": "" }]
+          }
+        },
+        {
+          "name": "Delete Agent",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/v1/agents/delete/:agent_id",
+            "variable": [{ "key": "agent_id", "value": "" }]
+          }
+        },
+        {
+          "name": "Configure Agent",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"agent_id\": \"uuid-here\",\n  \"settings\": {\n    \"llm_provider\": \"openai\",\n    \"llm_model\": \"gpt-4\",\n    \"temperature\": \"0.7\"\n  }\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/agents/configure"
+          }
+        },
+        {
+          "name": "Attach Knowledge Base",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"agent_id\": \"uuid-here\",\n  \"knowledge_base_id\": \"uuid-here\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/agents/knowledge-base/attach"
+          }
+        },
+        {
+          "name": "Detach Knowledge Base",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"agent_id\": \"uuid-here\",\n  \"knowledge_base_id\": \"uuid-here\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/agents/knowledge-base/detach"
+          }
+        },
+        {
+          "name": "Publish Agent",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v1/agents/publish-agent/:agent_id",
+            "variable": [{ "key": "agent_id", "value": "" }]
+          }
+        },
+        {
+          "name": "Unpublish Agent",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v1/agents/unpublish-agent/:agent_id",
+            "variable": [{ "key": "agent_id", "value": "" }]
+          }
+        },
+        {
+          "name": "Get Agent Configuration (Public)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v1/agents/get-agent-configuration/:agent_id",
+            "variable": [{ "key": "agent_id", "value": "" }]
+          }
+        }
+      ]
+    }
+  ]
+}

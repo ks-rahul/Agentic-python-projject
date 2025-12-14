@@ -22,6 +22,17 @@ intent_router = APIRouter()
 oauth_router = APIRouter()
 
 
+# Public endpoint for assistant configurations (no auth required)
+@router.get("/configurations")
+async def get_assistant_configurations(
+    db: AsyncSession = Depends(get_db)
+):
+    """Get all assistant configurations (public endpoint for chat widget)."""
+    assistant_service = AssistantService(db)
+    configurations = await assistant_service.get_all_configurations()
+    return {"configurations": configurations}
+
+
 # Assistant routes
 @router.get("/list", response_model=AssistantListResponse)
 async def list_assistants(

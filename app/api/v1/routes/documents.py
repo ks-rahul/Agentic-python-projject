@@ -161,3 +161,105 @@ async def batch_delete_documents(
         tenant_id=current_user.get("tenant_id"),
         document_count=len(request.document_ids)
     )
+
+
+# Batch URL Processing Models
+from pydantic import BaseModel, HttpUrl
+from typing import List
+
+
+class BatchUrlUploadItem(BaseModel):
+    """Single URL item for batch processing."""
+    url: str
+    title: Optional[str] = None
+    document_id: Optional[str] = None
+    custom_metadata: Optional[dict] = {}
+
+
+class BatchUrlUploadRequest(BaseModel):
+    """Request for batch URL document processing."""
+    knowledge_base_id: UUID
+    documents: List[BatchUrlUploadItem]
+    chunk_size: Optional[int] = None
+    chunk_overlap: Optional[int] = None
+
+
+@router.post("/from-url/batch", response_model=BatchInitiatedResponse, status_code=status.HTTP_202_ACCEPTED)
+async def batch_process_documents_from_url(
+    request: BatchUrlUploadRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Accepts a batch of documents from URLs and initiates a background
+    task to process all of them. This endpoint returns immediately.
+    """
+    if not request.documents:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Request body cannot be an empty list"
+        )
+    
+    if len(request.documents) > 100:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Maximum 100 URLs per batch"
+        )
+    
+    doc_service = DocumentService(db)
+    
+    # Dispatch Celery task for batch URL processing
+    task_id = await doc_service.batch_process_urls(
+        knowledge_base_id=str(request.knowledge_base_id),
+        tenant_id=current_user.get("tenant_id"),
+        documents=[doc.model_dump() for doc in request.documents],
+        chunk_size=request.chunk_size,
+        chunk_overlap=request.chunk_overlap
+    )
+    
+    return BatchInitiatedResponse(
+        message="Batch URL processing initiated. Documents will be processed in the background.",
+        task_id=task_id,
+        tenant_id=current_user.get("tenant_id"),
+        document_count=len(request.documents)
+    )
+
+
+@router.post("/from-url", response_model=DocumentUploadResponse, status_code=status.HTTP_201_CREATED)
+async def create_document_from_url(
+    knowledge_base_id: UUID = Form(...),
+    url: str = Form(...),
+    title: Optional[str] = Form(None),
+    custom_metadata: Optional[str] = Form("{}"),
+    chunk_size: Optional[int] = Form(None),
+    chunk_overlap: Optional[int] = Form(None),
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    """Create a document from a URL."""
+    import json
+    
+    doc_service = DocumentService(db)
+    
+    try:
+        metadata = json.loads(custom_metadata) if custom_metadata else {}
+    except json.JSONDecodeError:
+        metadata = {}
+    
+    result = await doc_service.create_from_url(
+        knowledge_base_id=str(knowledge_base_id),
+        tenant_id=current_user.get("tenant_id"),
+        created_by=current_user["user_id"],
+        url=url,
+        title=title,
+        custom_metadata=metadata,
+        chunk_size=chunk_size,
+        chunk_overlap=chunk_overlap
+    )
+    
+    return DocumentUploadResponse(
+        message="Document created from URL successfully",
+        document_id=result["document_id"],
+        filename=result.get("filename", url),
+        nodes_indexed=result.get("nodes_indexed", 1)
+    )

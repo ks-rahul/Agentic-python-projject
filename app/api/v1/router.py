@@ -17,6 +17,10 @@ from app.api.v1.routes import (
     webhooks,
     website_scrapes,
     whatsapp,
+    health,
+    encryption,
+    code_generation,
+    human_handoff,
 )
 
 api_router = APIRouter()
@@ -95,3 +99,18 @@ api_router.include_router(whatsapp.router, prefix="/whatsapp", tags=["WhatsApp"]
 
 # OAuth routes
 api_router.include_router(assistants.oauth_router, prefix="/oauth", tags=["OAuth"])
+
+# Health check routes
+api_router.include_router(health.router, prefix="/health", tags=["Health"])
+
+# Metrics routes
+api_router.include_router(health.metrics_router, prefix="/metrics", tags=["Metrics"])
+
+# Encryption routes
+api_router.include_router(encryption.router, prefix="/encryption", tags=["Encryption"])
+
+# Code generation routes
+api_router.include_router(code_generation.router, prefix="/code", tags=["Code Generation"])
+
+# Human handoff routes
+api_router.include_router(human_handoff.router, prefix="/human-handoff", tags=["Human Handoff"])

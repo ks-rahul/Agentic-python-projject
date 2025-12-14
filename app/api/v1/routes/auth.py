@@ -1,4 +1,5 @@
 """Authentication routes."""
+import secrets
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime, timezone
@@ -15,6 +16,9 @@ from app.core.security import (
 )
 from app.services.user_service import UserService
 from app.core.config import settings
+from app.core.logging import get_logger
+
+logger = get_logger(__name__)
 
 router = APIRouter()
 
@@ -184,8 +188,31 @@ async def update_password(
 @router.post("/social/redirect")
 async def social_redirect(request: SocialAuthRequest):
     """Get OAuth redirect URL for social login."""
-    # TODO: Implement OAuth redirect URL generation
-    return {"redirect_url": f"https://oauth.provider.com/{request.provider}"}
+    from app.services.social_auth_service import SocialAuthService
+    
+    social_auth = SocialAuthService()
+    
+    try:
+        # Generate state for CSRF protection
+        import secrets
+        state = secrets.token_urlsafe(32)
+        
+        # Default redirect URI - should be configured per environment
+        redirect_uri = f"{settings.APP_URL}/api/v1/auth/social/callback"
+        
+        result = social_auth.get_authorization_url(
+            provider=request.provider,
+            redirect_uri=redirect_uri,
+            state=state
+        )
+        
+        return result
+        
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
 
 
 @router.post("/social/callback", response_model=TokenResponse)
@@ -194,12 +221,84 @@ async def social_callback(
     db: AsyncSession = Depends(get_db)
 ):
     """Handle OAuth callback and authenticate user."""
+    from app.services.social_auth_service import SocialAuthService
+    
+    if not request.code:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Authorization code is required"
+        )
+    
+    social_auth = SocialAuthService()
     user_service = UserService(db)
     
-    # TODO: Verify OAuth token with provider and get user info
-    # For now, this is a placeholder
-    
-    raise HTTPException(
-        status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail="Social authentication not yet implemented"
-    )
+    try:
+        # Default redirect URI
+        redirect_uri = f"{settings.APP_URL}/api/v1/auth/social/callback"
+        
+        # Authenticate with OAuth provider
+        oauth_user = await social_auth.authenticate_user(
+            provider=request.provider,
+            code=request.code,
+            redirect_uri=redirect_uri
+        )
+        
+        if not oauth_user.get("email"):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email not provided by OAuth provider"
+            )
+        
+        # Check if user exists
+        user = await user_service.get_by_email(oauth_user["email"])
+        
+        if not user:
+            # Create new user from OAuth data
+            user = await user_service.create(
+                name=oauth_user.get("name", oauth_user["email"].split("@")[0]),
+                email=oauth_user["email"],
+                password=get_password_hash(secrets.token_urlsafe(32)),  # Random password
+                profile_image=oauth_user.get("profile_image"),
+                provider=oauth_user["provider"],
+                provider_id=oauth_user["provider_id"],
+                provider_token=oauth_user.get("access_token"),
+                provider_refresh_token=oauth_user.get("refresh_token"),
+                email_verified_at=datetime.now(timezone.utc)  # OAuth emails are verified
+            )
+        else:
+            # Update existing user with OAuth info
+            await user_service.update(
+                str(user.id),
+                provider=oauth_user["provider"],
+                provider_id=oauth_user["provider_id"],
+                provider_token=oauth_user.get("access_token"),
+                provider_refresh_token=oauth_user.get("refresh_token")
+            )
+        
+        # Get tenant_id
+        tenant_id = None
+        if user.tenants:
+            tenant_id = str(user.tenants[0].id)
+        
+        # Generate tokens
+        token_data = {"sub": str(user.id), "tenant_id": tenant_id}
+        access_token = create_access_token(token_data)
+        refresh_token = create_refresh_token(token_data)
+        
+        return TokenResponse(
+            access_token=access_token,
+            refresh_token=refresh_token,
+            expires_in=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES * 60
+        )
+        
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except Exception as e:
+        logger.error(f"Social auth error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Social authentication failed"
+        )

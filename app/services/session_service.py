@@ -297,3 +297,210 @@ class SessionService:
         )
         
         return message
+
+    async def update_session_encryption(
+        self,
+        session_id: str,
+        encryption_data: Dict[str, Any]
+    ) -> bool:
+        """Update session encryption key during handshake."""
+        sessions = get_sessions_collection()
+        
+        result = await sessions.update_one(
+            {"session_id": session_id},
+            {
+                "$set": {
+                    "encryption_key": encryption_data.get("encryption_key"),
+                    "key_shared_at": encryption_data.get("key_shared_at"),
+                    "metadata.last_activity": datetime.utcnow()
+                }
+            }
+        )
+        
+        return result.modified_count > 0
+    
+    async def enable_human_handoff(
+        self,
+        session_id: str,
+        handoff_data: Dict[str, Any]
+    ) -> bool:
+        """Enable human handoff for session."""
+        sessions = get_sessions_collection()
+        
+        result = await sessions.update_one(
+            {"session_id": session_id},
+            {
+                "$set": {
+                    "is_human": True,
+                    "handoff_data": handoff_data,
+                    "metadata.last_activity": datetime.utcnow()
+                }
+            }
+        )
+        
+        logger.info(f"Human handoff enabled for session {session_id}")
+        return result.modified_count > 0
+    
+    async def disable_human_handoff(
+        self,
+        session_id: str,
+        reason: str = "Conversation resolved",
+        metadata: Optional[Dict[str, Any]] = None
+    ) -> bool:
+        """Disable human handoff for session."""
+        sessions = get_sessions_collection()
+        
+        result = await sessions.update_one(
+            {"session_id": session_id},
+            {
+                "$set": {
+                    "is_human": False,
+                    "handoff_data.status": "completed",
+                    "handoff_data.completed_at": datetime.utcnow().isoformat(),
+                    "handoff_data.resolution": reason,
+                    "metadata.last_activity": datetime.utcnow()
+                }
+            }
+        )
+        
+        logger.info(f"Human handoff disabled for session {session_id}")
+        return result.modified_count > 0
+    
+    async def accept_human_handoff(
+        self,
+        handoff_id: str,
+        agent_data: Dict[str, Any]
+    ) -> bool:
+        """Accept a human handoff request."""
+        sessions = get_sessions_collection()
+        
+        result = await sessions.update_one(
+            {"handoff_data.handoff_id": handoff_id, "handoff_data.status": "pending"},
+            {
+                "$set": {
+                    "handoff_data.status": "accepted",
+                    "handoff_data.human_agent": agent_data,
+                    "metadata.last_activity": datetime.utcnow()
+                }
+            }
+        )
+        
+        return result.modified_count > 0
+    
+    async def create_human_message(
+        self,
+        session_id: str,
+        content: str,
+        agent_id: str,
+        metadata: Optional[Dict[str, Any]] = None
+    ) -> str:
+        """Create a message from human agent."""
+        message = await self.add_message(
+            session_id=session_id,
+            content=content,
+            message_type="human",
+            metadata={
+                **(metadata or {}),
+                "human_agent_id": agent_id
+            }
+        )
+        return message["message_id"]
+    
+    async def get_pending_handoffs(
+        self,
+        tenant_id: Optional[str] = None,
+        priority: Optional[str] = None,
+        limit: int = 50
+    ) -> List[Dict[str, Any]]:
+        """Get pending handoff requests."""
+        sessions = get_sessions_collection()
+        
+        query = {
+            "is_human": True,
+            "handoff_data.status": "pending"
+        }
+        
+        if tenant_id:
+            query["tenant_id"] = tenant_id
+        if priority:
+            query["handoff_data.priority"] = priority
+        
+        cursor = sessions.find(query).sort("handoff_data.requested_at", 1).limit(limit)
+        results = await cursor.to_list(length=limit)
+        
+        return [r.get("handoff_data", {}) for r in results]
+    
+    async def get_handoff_stats(self, tenant_id: Optional[str] = None) -> Dict[str, Any]:
+        """Get handoff statistics."""
+        sessions = get_sessions_collection()
+        
+        query = {"handoff_data": {"$exists": True}}
+        if tenant_id:
+            query["tenant_id"] = tenant_id
+        
+        total = await sessions.count_documents(query)
+        pending = await sessions.count_documents({**query, "handoff_data.status": "pending"})
+        accepted = await sessions.count_documents({**query, "handoff_data.status": "accepted"})
+        completed = await sessions.count_documents({**query, "handoff_data.status": "completed"})
+        
+        return {
+            "total": total,
+            "pending": pending,
+            "accepted": accepted,
+            "completed": completed,
+            "by_priority": {
+                "high": await sessions.count_documents({**query, "handoff_data.priority": "high"}),
+                "normal": await sessions.count_documents({**query, "handoff_data.priority": "normal"}),
+                "low": await sessions.count_documents({**query, "handoff_data.priority": "low"})
+            }
+        }
+    
+    async def get_session_stats(self, time_range: str = "24h") -> Dict[str, Any]:
+        """Get session statistics."""
+        sessions = get_sessions_collection()
+        
+        time_ranges = {
+            "1h": 1 * 60 * 60,
+            "24h": 24 * 60 * 60,
+            "7d": 7 * 24 * 60 * 60,
+            "30d": 30 * 24 * 60 * 60
+        }
+        
+        seconds = time_ranges.get(time_range, time_ranges["24h"])
+        start_time = datetime.utcnow().timestamp() - seconds
+        start_datetime = datetime.fromtimestamp(start_time)
+        
+        total = await sessions.count_documents({})
+        active = await sessions.count_documents({"is_active": True})
+        in_range = await sessions.count_documents({"start_time": {"$gte": start_datetime}})
+        
+        return {
+            "total": total,
+            "active": active,
+            "in_range": in_range,
+            "time_range": time_range
+        }
+    
+    async def get_message_stats(self, time_range: str = "24h") -> Dict[str, Any]:
+        """Get message statistics."""
+        messages = get_messages_collection()
+        
+        time_ranges = {
+            "1h": 1 * 60 * 60,
+            "24h": 24 * 60 * 60,
+            "7d": 7 * 24 * 60 * 60,
+            "30d": 30 * 24 * 60 * 60
+        }
+        
+        seconds = time_ranges.get(time_range, time_ranges["24h"])
+        start_time = datetime.utcnow().timestamp() - seconds
+        start_datetime = datetime.fromtimestamp(start_time)
+        
+        total = await messages.count_documents({})
+        in_range = await messages.count_documents({"created_at": {"$gte": start_datetime}})
+        
+        return {
+            "total": total,
+            "in_range": in_range,
+            "time_range": time_range
+        }
