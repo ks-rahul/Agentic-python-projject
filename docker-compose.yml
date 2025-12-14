@@ -19,6 +19,7 @@ services:
       - redis
     volumes:
       - ./uploads:/app/uploads
+      - ./logs:/app/logs
     restart: unless-stopped
 
   celery_worker:
@@ -40,6 +41,7 @@ services:
       - redis
     volumes:
       - ./uploads:/app/uploads
+      - ./logs:/app/logs
     restart: unless-stopped
 
   celery_beat:

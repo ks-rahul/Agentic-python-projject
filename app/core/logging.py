@@ -3,36 +3,133 @@ import logging
 import sys
 import time
 import json
+import os
 from typing import Optional, Dict, Any, Callable
 from datetime import datetime, timezone
 from functools import wraps
+from logging.handlers import RotatingFileHandler, TimedRotatingFileHandler
 import structlog
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.core.config import settings
 
+# Log directory and settings
+LOG_DIR = os.getenv("LOG_DIR", "logs")
+LOG_TO_FILE = os.getenv("LOG_TO_FILE", "true").lower() == "true"
+LOG_RETENTION_DAYS = int(os.getenv("LOG_RETENTION_DAYS", "7"))  # Days to keep logs
+
 
 def setup_logging():
-    """Configure structured logging."""
-    logging.basicConfig(
-        format="%(message)s",
-        stream=sys.stdout,
-        level=getattr(logging, settings.LOG_LEVEL.upper()),
+    """Configure structured logging with daily file rotation and auto-cleanup."""
+    log_level = getattr(logging, settings.LOG_LEVEL.upper())
+    
+    # Create logs directory if it doesn't exist
+    if LOG_TO_FILE and not os.path.exists(LOG_DIR):
+        os.makedirs(LOG_DIR, exist_ok=True)
+    
+    # Root logger configuration
+    root_logger = logging.getLogger()
+    root_logger.setLevel(log_level)
+    
+    # Clear existing handlers
+    root_logger.handlers = []
+    
+    # Console handler (always enabled)
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setLevel(log_level)
+    console_formatter = logging.Formatter(
+        "%(asctime)s | %(levelname)-8s | %(name)s | %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S"
     )
+    console_handler.setFormatter(console_formatter)
+    root_logger.addHandler(console_handler)
+    
+    # File formatter
+    file_formatter = logging.Formatter(
+        "%(asctime)s | %(levelname)-8s | %(name)s | %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S"
+    )
+    
+    # File handlers (if enabled) - All daily rotation
+    if LOG_TO_FILE:
+        # Main application log (daily rotation)
+        app_file_handler = TimedRotatingFileHandler(
+            os.path.join(LOG_DIR, "app.log"),
+            when="midnight",
+            interval=1,
+            backupCount=LOG_RETENTION_DAYS
+        )
+        app_file_handler.suffix = "%Y-%m-%d"
+        app_file_handler.setLevel(log_level)
+        app_file_handler.setFormatter(file_formatter)
+        root_logger.addHandler(app_file_handler)
+        
+        # Error log (daily rotation)
+        error_file_handler = TimedRotatingFileHandler(
+            os.path.join(LOG_DIR, "error.log"),
+            when="midnight",
+            interval=1,
+            backupCount=LOG_RETENTION_DAYS
+        )
+        error_file_handler.suffix = "%Y-%m-%d"
+        error_file_handler.setLevel(logging.ERROR)
+        error_file_handler.setFormatter(file_formatter)
+        root_logger.addHandler(error_file_handler)
+        
+        # Audit log (daily rotation)
+        audit_file_handler = TimedRotatingFileHandler(
+            os.path.join(LOG_DIR, "audit.log"),
+            when="midnight",
+            interval=1,
+            backupCount=LOG_RETENTION_DAYS
+        )
+        audit_file_handler.suffix = "%Y-%m-%d"
+        audit_file_handler.setLevel(logging.INFO)
+        audit_file_handler.setFormatter(file_formatter)
+        logging.getLogger("audit").addHandler(audit_file_handler)
+        
+        # Security log (daily rotation)
+        security_file_handler = TimedRotatingFileHandler(
+            os.path.join(LOG_DIR, "security.log"),
+            when="midnight",
+            interval=1,
+            backupCount=LOG_RETENTION_DAYS
+        )
+        security_file_handler.suffix = "%Y-%m-%d"
+        security_file_handler.setLevel(logging.INFO)
+        security_file_handler.setFormatter(file_formatter)
+        logging.getLogger("security").addHandler(security_file_handler)
+        
+        # API request log (daily rotation)
+        api_file_handler = TimedRotatingFileHandler(
+            os.path.join(LOG_DIR, "api.log"),
+            when="midnight",
+            interval=1,
+            backupCount=LOG_RETENTION_DAYS
+        )
+        api_file_handler.suffix = "%Y-%m-%d"
+        api_file_handler.setLevel(logging.INFO)
+        api_file_handler.setFormatter(file_formatter)
+        logging.getLogger("api").addHandler(api_file_handler)
 
+    # Configure structlog - use KeyValueRenderer for clean file output
+    # This removes ANSI color codes from logs
     structlog.configure(
         processors=[
             structlog.stdlib.filter_by_level,
             structlog.stdlib.add_logger_name,
             structlog.stdlib.add_log_level,
             structlog.stdlib.PositionalArgumentsFormatter(),
-            structlog.processors.TimeStamper(fmt="iso"),
+            structlog.processors.TimeStamper(fmt="%Y-%m-%d %H:%M:%S"),
             structlog.processors.StackInfoRenderer(),
             structlog.processors.format_exc_info,
             structlog.processors.UnicodeDecoder(),
-            structlog.processors.JSONRenderer() if settings.APP_ENV == "production" 
-            else structlog.dev.ConsoleRenderer(),
+            # Use KeyValueRenderer for clean logs (no colors)
+            structlog.processors.KeyValueRenderer(
+                key_order=["timestamp", "level", "logger", "event"],
+                drop_missing=True
+            ),
         ],
         wrapper_class=structlog.stdlib.BoundLogger,
         context_class=dict,
