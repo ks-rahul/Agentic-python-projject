@@ -59,6 +59,33 @@ class Settings(BaseSettings):
     # Encryption
     ENCRYPTION_KEY: Optional[str] = None
 
+    # Email Configuration
+    EMAIL_PROVIDER: str = "smtp"  # smtp, sendgrid, mailgun
+    EMAIL_FROM_ADDRESS: str = "noreply@example.com"
+    EMAIL_FROM_NAME: str = "Agentic AI"
+    
+    # SMTP Settings
+    SMTP_HOST: str = "smtp.gmail.com"
+    SMTP_PORT: int = 587
+    SMTP_USERNAME: Optional[str] = None
+    SMTP_PASSWORD: Optional[str] = None
+    SMTP_USE_TLS: bool = True
+    
+    # SendGrid
+    SENDGRID_API_KEY: Optional[str] = None
+    
+    # Mailgun
+    MAILGUN_API_KEY: Optional[str] = None
+    MAILGUN_DOMAIN: Optional[str] = None
+    
+    # Push Notifications (Firebase)
+    FCM_SERVER_KEY: Optional[str] = None
+    
+    # SMS (Twilio)
+    TWILIO_ACCOUNT_SID: Optional[str] = None
+    TWILIO_AUTH_TOKEN: Optional[str] = None
+    TWILIO_PHONE_NUMBER: Optional[str] = None
+
     # Social Auth - Google
     GOOGLE_CLIENT_ID: Optional[str] = None
     GOOGLE_CLIENT_SECRET: Optional[str] = None

@@ -1,25 +1,41 @@
 """Security utilities for authentication and authorization."""
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Any
+import bcrypt
 from jose import JWTError, jwt
-from passlib.context import CryptContext
 from fastapi import HTTPException, status, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 from app.core.config import settings
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 security = HTTPBearer()
+
+
+def _prepare_password(password: str) -> bytes:
+    """Prepare password for bcrypt - encode and truncate to 72 bytes."""
+    # bcrypt has a 72-byte limit
+    encoded = password.encode('utf-8')
+    if len(encoded) > 72:
+        encoded = encoded[:72]
+    return encoded
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a password against its hash."""
-    return pwd_context.verify(plain_password, hashed_password)
+    try:
+        password_bytes = _prepare_password(plain_password)
+        hashed_bytes = hashed_password.encode('utf-8')
+        return bcrypt.checkpw(password_bytes, hashed_bytes)
+    except Exception:
+        return False
 
 
 def get_password_hash(password: str) -> str:
     """Generate password hash."""
-    return pwd_context.hash(password)
+    password_bytes = _prepare_password(password)
+    salt = bcrypt.gensalt(rounds=12)
+    hashed = bcrypt.hashpw(password_bytes, salt)
+    return hashed.decode('utf-8')
 
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:

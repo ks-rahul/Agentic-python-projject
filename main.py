@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.core.config import settings
-from app.core.logging import setup_logging, get_logger
+from app.core.logging import setup_logging, get_logger, RequestLoggingMiddleware
 from app.db.postgresql import init_db
 from app.db.mongodb import connect_mongodb, close_mongodb
 from app.db.redis import connect_redis, close_redis
@@ -74,6 +74,8 @@ app.add_middleware(
     expose_headers=["*"],
 )
 
+# Request logging middleware
+app.add_middleware(RequestLoggingMiddleware)
 
 # Exception handlers
 @app.exception_handler(Exception)

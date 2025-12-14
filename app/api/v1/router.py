@@ -21,6 +21,7 @@ from app.api.v1.routes import (
     encryption,
     code_generation,
     human_handoff,
+    notifications,
 )
 
 api_router = APIRouter()
@@ -114,3 +115,6 @@ api_router.include_router(code_generation.router, prefix="/code", tags=["Code Ge
 
 # Human handoff routes
 api_router.include_router(human_handoff.router, prefix="/human-handoff", tags=["Human Handoff"])
+
+# Notification routes
+api_router.include_router(notifications.router, prefix="/notifications", tags=["Notifications"])
