@@ -4,7 +4,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.postgresql import get_db
+from app.db.mysql import get_db
 from app.schemas.document import (
     DocumentCreate, DocumentUpdate, DocumentResponse, DocumentListResponse,
     DocumentUploadResponse, BatchDeleteRequest, BatchInitiatedResponse

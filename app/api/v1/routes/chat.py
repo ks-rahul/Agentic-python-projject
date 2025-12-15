@@ -7,7 +7,7 @@ from fastapi.responses import StreamingResponse
 from app.schemas.session import ChatRequest
 from app.services.chat_service import ChatService
 from app.services.agent_service import AgentService
-from app.db.postgresql import get_db
+from app.db.mysql import get_db
 from app.core.logging import get_logger
 
 logger = get_logger(__name__)

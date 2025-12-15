@@ -10,7 +10,7 @@ from fastapi.responses import JSONResponse
 
 from app.core.config import settings
 from app.core.logging import setup_logging, get_logger, RequestLoggingMiddleware
-from app.db.postgresql import init_db
+from app.db.mysql import init_db
 from app.db.mongodb import connect_mongodb, close_mongodb
 from app.db.redis import connect_redis, close_redis
 from app.api.v1.router import api_router
@@ -29,7 +29,7 @@ async def lifespan(app: FastAPI):
     try:
         # Initialize databases
         await init_db()
-        logger.info("PostgreSQL initialized")
+        logger.info("MySQL initialized")
         
         await connect_mongodb()
         logger.info("MongoDB connected")
@@ -122,7 +122,7 @@ async def health_check():
 @app.get("/api/v1/get-agent-configuration/{agent_id}")
 async def get_agent_configuration_public(agent_id: str):
     """Get agent configuration (public endpoint for chat widget)."""
-    from app.db.postgresql import AsyncSessionLocal
+    from app.db.mysql import AsyncSessionLocal
     from app.services.agent_service import AgentService
     
     async with AsyncSessionLocal() as db:
@@ -148,7 +148,7 @@ async def get_assistant_configurations_public():
 @app.get("/api/v1/get-assistant-intent-configurations/{agent_id}")
 async def get_assistant_intent_configurations_public(agent_id: str):
     """Get assistant intent configurations (public endpoint)."""
-    from app.db.postgresql import AsyncSessionLocal
+    from app.db.mysql import AsyncSessionLocal
     from app.services.assistant_service import AssistantService
     
     async with AsyncSessionLocal() as db:

@@ -1,10 +1,9 @@
 """Lead and Lead Form models."""
 from sqlalchemy import Column, String, Text, Enum, ForeignKey, JSON, Boolean
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 import enum
 
-from app.models.base import BaseModel, SoftDeleteMixin
+from app.models.base import BaseModel, SoftDeleteMixin, GUID
 
 
 class LeadStatus(str, enum.Enum):
@@ -19,8 +18,8 @@ class LeadForm(BaseModel, SoftDeleteMixin):
     """Lead form configuration."""
     __tablename__ = "lead_forms"
 
-    tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False)
-    agent_id = Column(UUID(as_uuid=True), ForeignKey("agents.id"), nullable=False)
+    tenant_id = Column(GUID(), ForeignKey("tenants.id"), nullable=False)
+    agent_id = Column(GUID(), ForeignKey("agents.id"), nullable=False)
     
     name = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
@@ -47,9 +46,9 @@ class Lead(BaseModel, SoftDeleteMixin):
     """Lead submission."""
     __tablename__ = "leads"
 
-    tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False)
-    agent_id = Column(UUID(as_uuid=True), ForeignKey("agents.id"), nullable=False)
-    lead_form_id = Column(UUID(as_uuid=True), ForeignKey("lead_forms.id"), nullable=True)
+    tenant_id = Column(GUID(), ForeignKey("tenants.id"), nullable=False)
+    agent_id = Column(GUID(), ForeignKey("agents.id"), nullable=False)
+    lead_form_id = Column(GUID(), ForeignKey("lead_forms.id"), nullable=True)
     session_id = Column(String(255), nullable=True)
     
     # Lead data

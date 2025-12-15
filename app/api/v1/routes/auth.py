@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime, timezone, timedelta
 
-from app.db.postgresql import get_db
+from app.db.mysql import get_db
 from app.db.redis import get_redis
 from app.schemas.auth import (
     LoginRequest, RegisterRequest, TokenResponse, RefreshTokenRequest,

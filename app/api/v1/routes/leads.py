@@ -4,7 +4,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.postgresql import get_db
+from app.db.mysql import get_db
 from app.schemas.lead import (
     LeadFormCreate, LeadFormUpdate, LeadFormResponse, LeadFormListResponse,
     LeadCreate, LeadResponse, LeadListResponse, PublicLeadCreate

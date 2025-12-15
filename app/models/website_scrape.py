@@ -1,10 +1,9 @@
 """Website Scrape model."""
 from sqlalchemy import Column, String, Text, Enum, ForeignKey, JSON, Integer
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 import enum
 
-from app.models.base import BaseModel, SoftDeleteMixin
+from app.models.base import BaseModel, SoftDeleteMixin, GUID
 
 
 class ScrapeStatus(str, enum.Enum):
@@ -25,10 +24,10 @@ class WebsiteScrape(BaseModel, SoftDeleteMixin):
     """Website scrape configuration and status."""
     __tablename__ = "website_scrapes"
 
-    knowledge_base_id = Column(UUID(as_uuid=True), ForeignKey("knowledge_bases.id"), nullable=False)
-    created_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
-    tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False)
-    parent_id = Column(UUID(as_uuid=True), ForeignKey("website_scrapes.id"), nullable=True)
+    knowledge_base_id = Column(GUID(), ForeignKey("knowledge_bases.id"), nullable=False)
+    created_by = Column(GUID(), ForeignKey("users.id"), nullable=True)
+    tenant_id = Column(GUID(), ForeignKey("tenants.id"), nullable=False)
+    parent_id = Column(GUID(), ForeignKey("website_scrapes.id"), nullable=True)
     
     title = Column(String(255), nullable=False)
     url = Column(Text, nullable=False)

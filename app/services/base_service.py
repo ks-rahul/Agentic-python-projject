@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, delete
 from sqlalchemy.orm import selectinload
 
-from app.db.postgresql import Base
+from app.db.mysql import Base
 
 ModelType = TypeVar("ModelType", bound=Base)
 

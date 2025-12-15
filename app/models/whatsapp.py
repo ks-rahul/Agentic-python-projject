@@ -1,17 +1,16 @@
 """WhatsApp integration models."""
 from sqlalchemy import Column, String, Text, ForeignKey, JSON, Boolean
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
-from app.models.base import BaseModel, SoftDeleteMixin
+from app.models.base import BaseModel, SoftDeleteMixin, GUID
 
 
 class ConnectedWhatsappAccount(BaseModel, SoftDeleteMixin):
     """Connected WhatsApp Business Account."""
     __tablename__ = "connected_whatsapp_accounts"
 
-    tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False)
-    agent_id = Column(UUID(as_uuid=True), ForeignKey("agents.id"), nullable=False)
+    tenant_id = Column(GUID(), ForeignKey("tenants.id"), nullable=False)
+    agent_id = Column(GUID(), ForeignKey("agents.id"), nullable=False)
     
     # WhatsApp Business API credentials
     phone_number_id = Column(String(255), nullable=False, unique=True)

@@ -5,12 +5,10 @@ import enum
 
 from app.models.base import BaseModel, SoftDeleteMixin
 
-
 class UserStatus(str, enum.Enum):
     ACTIVE = "active"
     INACTIVE = "inactive"
     SUSPENDED = "suspended"
-
 
 class User(BaseModel, SoftDeleteMixin):
     """User model for authentication and authorization."""

@@ -6,15 +6,15 @@ services:
     env_file:
       - .env
     environment:
-      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-agentic_ai}
-      - DATABASE_SYNC_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-agentic_ai}
+      - DATABASE_URL=mysql+aiomysql://${MYSQL_USER:-agentic}:${MYSQL_PASSWORD:-agentic}@mysql:3306/${MYSQL_DATABASE:-agentic_ai}
+      - DATABASE_SYNC_URL=mysql+pymysql://${MYSQL_USER:-agentic}:${MYSQL_PASSWORD:-agentic}@mysql:3306/${MYSQL_DATABASE:-agentic_ai}
       - MONGODB_URL=mongodb://mongo:27017
       - MONGODB_DATABASE=${MONGODB_DATABASE:-agentic_chat}
       - REDIS_URL=redis://redis:6379/0
       - CELERY_BROKER_URL=redis://redis:6379/1
       - CELERY_RESULT_BACKEND=redis://redis:6379/2
     depends_on:
-      - postgres
+      - mysql
       - mongo
       - redis
     volumes:
@@ -28,15 +28,15 @@ services:
     env_file:
       - .env
     environment:
-      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-agentic_ai}
-      - DATABASE_SYNC_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-agentic_ai}
+      - DATABASE_URL=mysql+aiomysql://${MYSQL_USER:-agentic}:${MYSQL_PASSWORD:-agentic}@mysql:3306/${MYSQL_DATABASE:-agentic_ai}
+      - DATABASE_SYNC_URL=mysql+pymysql://${MYSQL_USER:-agentic}:${MYSQL_PASSWORD:-agentic}@mysql:3306/${MYSQL_DATABASE:-agentic_ai}
       - MONGODB_URL=mongodb://mongo:27017
       - MONGODB_DATABASE=${MONGODB_DATABASE:-agentic_chat}
       - REDIS_URL=redis://redis:6379/0
       - CELERY_BROKER_URL=redis://redis:6379/1
       - CELERY_RESULT_BACKEND=redis://redis:6379/2
     depends_on:
-      - postgres
+      - mysql
       - mongo
       - redis
     volumes:
@@ -50,8 +50,8 @@ services:
     env_file:
       - .env
     environment:
-      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-agentic_ai}
-      - DATABASE_SYNC_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-agentic_ai}
+      - DATABASE_URL=mysql+aiomysql://${MYSQL_USER:-agentic}:${MYSQL_PASSWORD:-agentic}@mysql:3306/${MYSQL_DATABASE:-agentic_ai}
+      - DATABASE_SYNC_URL=mysql+pymysql://${MYSQL_USER:-agentic}:${MYSQL_PASSWORD:-agentic}@mysql:3306/${MYSQL_DATABASE:-agentic_ai}
       - MONGODB_URL=mongodb://mongo:27017
       - MONGODB_DATABASE=${MONGODB_DATABASE:-agentic_chat}
       - REDIS_URL=redis://redis:6379/0
@@ -75,19 +75,21 @@ services:
       - celery_worker
     restart: unless-stopped
 
-  postgres:
-    image: postgres:15
+  mysql:
+    image: mysql:8
     environment:
-      - POSTGRES_USER=${POSTGRES_USER:-postgres}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
-      - POSTGRES_DB=${POSTGRES_DB:-agentic_ai}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-root}
+      - MYSQL_DATABASE=${MYSQL_DATABASE:-agentic_ai}
+      - MYSQL_USER=${MYSQL_USER:-agentic}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-agentic}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - mysql_data:/var/lib/mysql
     ports:
-      - "${POSTGRES_PORT:-5422}:5432"
+      - "${MYSQL_PORT:-3306}:3306"
     restart: unless-stopped
+    command: --default-authentication-plugin=mysql_native_password
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -118,19 +120,17 @@ services:
       timeout: 5s
       retries: 5
 
-  # PostgreSQL Admin UI (like phpMyAdmin for PostgreSQL)
-  pgadmin:
-    image: dpage/pgadmin4:latest
+  # phpMyAdmin (MySQL Admin UI)
+  phpmyadmin:
+    image: phpmyadmin:latest
     environment:
-      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_EMAIL:-admin@admin.com}
-      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PASSWORD:-admin}
-      - PGADMIN_CONFIG_SERVER_MODE=False
+      - PMA_HOST=mysql
+      - PMA_PORT=3306
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-root}
     ports:
-      - "${PGADMIN_PORT:-5050}:80"
+      - "${PHPMYADMIN_PORT:-8080}:80"
     depends_on:
-      - postgres
-    volumes:
-      - pgadmin_data:/var/lib/pgadmin
+      - mysql
     restart: unless-stopped
 
   # MongoDB Admin UI
@@ -161,7 +161,6 @@ services:
     restart: unless-stopped
 
 volumes:
-  postgres_data:
+  mysql_data:
   mongo_data:
   redis_data:
-  pgadmin_data:

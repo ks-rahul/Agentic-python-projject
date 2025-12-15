@@ -5,11 +5,11 @@ Unified Python backend for the Agentic AI Platform, replacing Laravel and Node.j
 ## Features
 
 - **FastAPI** - Modern, fast web framework
-- **PostgreSQL** - Primary database for structured data
+- **MySQL** - Primary database for structured data
 - **MongoDB** - Chat sessions and messages storage
 - **Redis** - Caching and Celery broker
 - **Celery** - Background task processing
-- **SQLAlchemy** - Async ORM for PostgreSQL
+- **SQLAlchemy** - Async ORM for MySQL
 - **Motor** - Async MongoDB driver
 - **JWT Authentication** - Secure API authentication
 - **RBAC** - Role-based access control

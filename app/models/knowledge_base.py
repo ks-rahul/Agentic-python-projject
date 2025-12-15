@@ -1,10 +1,9 @@
 """Knowledge Base model."""
 from sqlalchemy import Column, String, Integer, Text, Enum, ForeignKey
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 import enum
 
-from app.models.base import BaseModel, SoftDeleteMixin
+from app.models.base import BaseModel, SoftDeleteMixin, GUID
 
 
 class KnowledgeBaseStatus(str, enum.Enum):
@@ -29,8 +28,8 @@ class KnowledgeBase(BaseModel, SoftDeleteMixin):
     """Knowledge Base for RAG system."""
     __tablename__ = "knowledge_bases"
 
-    tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False)
-    created_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    tenant_id = Column(GUID(), ForeignKey("tenants.id"), nullable=False)
+    created_by = Column(GUID(), ForeignKey("users.id"), nullable=True)
     title = Column(String(255), nullable=False)
     short_description = Column(Text, nullable=True)
     

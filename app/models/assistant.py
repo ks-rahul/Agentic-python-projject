@@ -1,10 +1,9 @@
 """Assistant models."""
 from sqlalchemy import Column, String, Text, Enum, ForeignKey, JSON, Boolean
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 import enum
 
-from app.models.base import BaseModel, SoftDeleteMixin
+from app.models.base import BaseModel, SoftDeleteMixin, GUID
 
 
 class AssistantStatus(str, enum.Enum):
@@ -18,8 +17,8 @@ class Assistant(BaseModel, SoftDeleteMixin):
     """Assistant model for custom integrations."""
     __tablename__ = "assistants"
 
-    tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False)
-    created_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    tenant_id = Column(GUID(), ForeignKey("tenants.id"), nullable=False)
+    created_by = Column(GUID(), ForeignKey("users.id"), nullable=True)
     name = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
     icon = Column(String(255), nullable=True)
@@ -43,7 +42,7 @@ class AssistantConfiguration(BaseModel):
     """Configuration for assistants."""
     __tablename__ = "assistant_configurations"
 
-    assistant_id = Column(UUID(as_uuid=True), ForeignKey("assistants.id"), nullable=False)
+    assistant_id = Column(GUID(), ForeignKey("assistants.id"), nullable=False)
     config_key = Column(String(255), nullable=False)
     config_value = Column(Text, nullable=True)
     config_type = Column(String(50), default="string")
@@ -58,9 +57,9 @@ class AssistantIntentConfiguration(BaseModel, SoftDeleteMixin):
     """Intent configuration for assistants."""
     __tablename__ = "assistant_intent_configurations"
 
-    tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False)
-    agent_id = Column(UUID(as_uuid=True), ForeignKey("agents.id"), nullable=False)
-    assistant_id = Column(UUID(as_uuid=True), ForeignKey("assistants.id"), nullable=True)
+    tenant_id = Column(GUID(), ForeignKey("tenants.id"), nullable=False)
+    agent_id = Column(GUID(), ForeignKey("agents.id"), nullable=False)
+    assistant_id = Column(GUID(), ForeignKey("assistants.id"), nullable=True)
     
     intent_name = Column(String(255), nullable=False)
     intent_description = Column(Text, nullable=True)

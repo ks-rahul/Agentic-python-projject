@@ -9,7 +9,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app.core.config import settings
-from app.db.postgresql import Base
+from app.db.mysql import Base
 from app.models import *  # Import all models
 
 config = context.config

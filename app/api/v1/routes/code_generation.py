@@ -7,7 +7,7 @@ from fastapi import APIRouter, HTTPException, status, Depends
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.postgresql import get_db
+from app.db.mysql import get_db
 from app.services.chat_service import ChatService
 from app.core.config import settings
 from app.core.logging import get_logger

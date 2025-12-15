@@ -13,9 +13,9 @@ class Settings(BaseSettings):
     API_HOST: str = "0.0.0.0"
     API_PORT: int = 8000
 
-    # PostgreSQL Database
-    DATABASE_URL: str = "postgresql+asyncpg://user:password@localhost:5432/agentic_ai"
-    DATABASE_SYNC_URL: str = "postgresql://user:password@localhost:5432/agentic_ai"
+    # MySQL Database
+    DATABASE_URL: str = "mysql+aiomysql://root:root@localhost:3306/agentic_ai"
+    DATABASE_SYNC_URL: str = "mysql+pymysql://root:root@localhost:3306/agentic_ai"
 
     # MongoDB
     MONGODB_URL: str = "mongodb://localhost:27017"
@@ -109,9 +109,11 @@ class Settings(BaseSettings):
     def cors_origins_list(self) -> List[str]:
         return [origin.strip() for origin in self.CORS_ORIGINS.split(",")]
 
-    class Config:
-        env_file = ".env"
-        case_sensitive = True
+    model_config = {
+        "env_file": ".env",
+        "case_sensitive": True,
+        "extra": "ignore",  # Ignore extra env vars not defined in Settings
+    }
 
 
 @lru_cache()

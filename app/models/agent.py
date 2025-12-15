@@ -1,30 +1,26 @@
 """Agent models."""
 from sqlalchemy import Column, String, Text, Enum, ForeignKey, JSON
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 import enum
 
-from app.models.base import BaseModel, SoftDeleteMixin
-
+from app.models.base import BaseModel, SoftDeleteMixin, GUID
 
 class AgentStatus(str, enum.Enum):
     DRAFT = "draft"
     PUBLISHED = "published"
     ARCHIVED = "archived"
 
-
 class AgentType(str, enum.Enum):
     CHATBOT = "chatbot"
     ASSISTANT = "assistant"
     WORKFLOW = "workflow"
-
 
 class Agent(BaseModel, SoftDeleteMixin):
     """AI Agent model."""
     __tablename__ = "agents"
 
     ai_agent_id = Column(String(255), nullable=True)
-    tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=True)
+    tenant_id = Column(GUID(), ForeignKey("tenants.id"), nullable=True)
     name = Column(String(255), nullable=False)
     display_name = Column(String(255), nullable=True)
     type = Column(Enum(AgentType), default=AgentType.CHATBOT)
@@ -41,12 +37,11 @@ class Agent(BaseModel, SoftDeleteMixin):
     lead_form = relationship("LeadForm", back_populates="agent", uselist=False)
     intent_configurations = relationship("AssistantIntentConfiguration", back_populates="agent")
 
-
 class AgentSetting(BaseModel):
     """Agent settings and configuration."""
     __tablename__ = "agent_settings"
 
-    agent_id = Column(UUID(as_uuid=True), ForeignKey("agents.id"), nullable=False)
+    agent_id = Column(GUID(), ForeignKey("agents.id"), nullable=False)
     
     # LLM Settings
     llm_provider = Column(String(50), default="openai")
@@ -69,25 +64,23 @@ class AgentSetting(BaseModel):
     # Relationships
     agent = relationship("Agent", back_populates="settings")
 
-
 class AgentKnowledgeBase(BaseModel):
     """Association between agents and knowledge bases."""
     __tablename__ = "agent_knowledge_bases"
 
-    agent_id = Column(UUID(as_uuid=True), ForeignKey("agents.id"), nullable=False)
-    knowledge_base_id = Column(UUID(as_uuid=True), ForeignKey("knowledge_bases.id"), nullable=False)
+    agent_id = Column(GUID(), ForeignKey("agents.id"), nullable=False)
+    knowledge_base_id = Column(GUID(), ForeignKey("knowledge_bases.id"), nullable=False)
 
     # Relationships
     agent = relationship("Agent", back_populates="knowledge_bases")
     knowledge_base = relationship("KnowledgeBase", back_populates="agents")
 
-
 class AgentAssistant(BaseModel):
     """Association between agents and assistants with auth config."""
     __tablename__ = "agent_assistants"
 
-    agent_id = Column(UUID(as_uuid=True), ForeignKey("agents.id"), nullable=False)
-    assistant_id = Column(UUID(as_uuid=True), ForeignKey("assistants.id"), nullable=False)
+    agent_id = Column(GUID(), ForeignKey("agents.id"), nullable=False)
+    assistant_id = Column(GUID(), ForeignKey("assistants.id"), nullable=False)
     required_tenant_auth = Column(String(50), nullable=True)
     auth_configurations = Column(JSON, nullable=True)
     auth_credentials = Column(JSON, nullable=True)

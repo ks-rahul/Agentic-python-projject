@@ -5,7 +5,7 @@ from datetime import datetime
 from fastapi import APIRouter, Depends
 from fastapi.responses import PlainTextResponse
 
-from app.db.postgresql import get_db
+from app.db.mysql import get_db
 from app.db.mongodb import get_mongodb
 from app.db.redis import get_redis
 from app.core.logging import get_logger
@@ -42,7 +42,7 @@ async def deep_health_check(db=Depends(get_db)):
         "timestamp": datetime.utcnow().isoformat()
     }
     
-    # Check PostgreSQL
+    # Check MySQL
     try:
         from sqlalchemy import text
         await db.execute(text("SELECT 1"))
