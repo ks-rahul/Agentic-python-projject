@@ -105,6 +105,9 @@ class Settings(BaseSettings):
     # Application URL (for OAuth callbacks)
     APP_URL: str = "http://localhost:8000"
 
+    # Frontend URL (for OAuth callbacks)
+    FRONTEND_URL: str = "http://localhost:8080"
+
     @property
     def cors_origins_list(self) -> List[str]:
         return [origin.strip() for origin in self.CORS_ORIGINS.split(",")]

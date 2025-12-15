@@ -7,7 +7,6 @@ from sqlalchemy.orm import selectinload
 from app.models.tenant import Tenant, TenantUser
 from app.services.base_service import BaseService
 
-
 class TenantService(BaseService[Tenant]):
     """Service for tenant operations."""
     
@@ -34,7 +33,7 @@ class TenantService(BaseService[Tenant]):
         """Create a tenant and associate with user."""
         tenant = await self.create(
             created_by=user_id,
-            name=name,
+            name=f"{name}'s Workspace",
             **kwargs
         )
         

@@ -20,6 +20,7 @@ services:
     volumes:
       - ./uploads:/app/uploads
       - ./logs:/app/logs
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload  # ADD THIS
     restart: unless-stopped
 
   celery_worker:
@@ -40,6 +41,7 @@ services:
       - mongo
       - redis
     volumes:
+      - .:/app 
       - ./uploads:/app/uploads
       - ./logs:/app/logs
     restart: unless-stopped

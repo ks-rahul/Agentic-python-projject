@@ -17,6 +17,7 @@ from app.core.security import (
     create_refresh_token, decode_token, get_current_user
 )
 from app.services.user_service import UserService
+from app.services.tenant_service import TenantService
 from app.tasks.email_tasks import (
     send_verification_email_task,
     send_password_reset_email_task,
@@ -116,6 +117,10 @@ async def register(request: RegisterRequest, req: Request, db: AsyncSession = De
         phone=request.phone,
         country_code=request.country_code
     )
+
+    # Create tenant
+    tenant_service = TenantService(db)
+    await tenant_service.create_with_user(user.id, user.name)
     
     # Generate verification token and store in Redis
     verification_token = secrets.token_urlsafe(32)
@@ -129,7 +134,7 @@ async def register(request: RegisterRequest, req: Request, db: AsyncSession = De
     )
     
     # Send verification email (async via Celery)
-    verification_url = f"{settings.APP_URL}/api/v1/auth/email/verify/{user.id}/{verification_token}"
+    verification_url = f"{settings.FRONTEND_URL}/email/verify/{user.id}/{verification_token}"
     send_verification_email_task.delay(
         email=user.email,
         name=user.name,
