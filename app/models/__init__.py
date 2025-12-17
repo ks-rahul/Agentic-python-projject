@@ -10,6 +10,7 @@ from app.models.lead import LeadForm, Lead
 from app.models.website_scrape import WebsiteScrape
 from app.models.role import Role, Permission, RoleHasPermission, ModelHasRole, ModelHasPermission
 from app.models.whatsapp import ConnectedWhatsappAccount
+from app.models.app_module import AppModule
 
 __all__ = [
     "User",
@@ -35,4 +36,5 @@ __all__ = [
     "ModelHasRole",
     "ModelHasPermission",
     "ConnectedWhatsappAccount",
+    "AppModule",
 ]

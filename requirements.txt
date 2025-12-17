@@ -21,9 +21,13 @@ aioredis==2.0.1
 
 # AI/ML
 openai==1.58.1
+anthropic==0.40.0
 llama-index==0.12.10
 langchain==0.3.14
 tiktoken==0.8.0
+
+# Vector Store
+pinecone-client==5.0.1
 
 # Background Tasks
 celery==5.4.0

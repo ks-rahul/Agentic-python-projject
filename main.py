@@ -14,6 +14,7 @@ from app.db.postgresql import init_db
 from app.db.mongodb import connect_mongodb, close_mongodb
 from app.db.redis import connect_redis, close_redis
 from app.api.v1.router import api_router
+from app.websocket.routes import router as websocket_router
 
 # Setup logging
 setup_logging()
@@ -94,6 +95,9 @@ async def global_exception_handler(request, exc: Exception):
 
 # Include API router
 app.include_router(api_router, prefix="/api/v1")
+
+# Include WebSocket router
+app.include_router(websocket_router, prefix="/ws", tags=["WebSocket"])
 
 # Root endpoint
 @app.get("/", include_in_schema=False)

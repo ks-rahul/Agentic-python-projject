@@ -32,6 +32,28 @@ class Settings(BaseSettings):
 
     # OpenAI
     OPENAI_API_KEY: Optional[str] = None
+    
+    # Anthropic
+    ANTHROPIC_API_KEY: Optional[str] = None
+    
+    # Pinecone Vector Store
+    PINECONE_API_KEY: Optional[str] = None
+    PINECONE_INDEX_NAME: Optional[str] = None
+    PINECONE_INDEX_HOST: Optional[str] = None
+    
+    # Embedding Model
+    EMBEDDING_MODEL: str = "text-embedding-3-small"
+    
+    # RAG Settings
+    DEFAULT_CHUNK_SIZE: int = 1000
+    DEFAULT_CHUNK_OVERLAP: int = 200
+    
+    # Code Generation
+    CODE_GENERATION_MODEL: str = "gpt-4"
+    GENERATED_CODE_PATH: str = "./generated_code"
+    
+    # Document Processing Webhook
+    DOCUMENT_STATUS_UPDATE_WEBHOOK_URL: Optional[str] = None
 
     # Celery
     CELERY_BROKER_URL: str = "redis://localhost:6379/1"
@@ -43,8 +65,11 @@ class Settings(BaseSettings):
     WHATSAPP_PHONE_NUMBER_ID: Optional[str] = None
 
     # Storage
-    STORAGE_TYPE: str = "local"
+    STORAGE_TYPE: str = "local"  # local or s3
     STORAGE_PATH: str = "./uploads"
+    LOCAL_STORAGE_PATH: str = "./uploads"
+    CODE_STORAGE_TYPE: str = "local"  # local or s3
+    S3_BUCKET_NAME: Optional[str] = None
     AWS_ACCESS_KEY_ID: Optional[str] = None
     AWS_SECRET_ACCESS_KEY: Optional[str] = None
     AWS_S3_BUCKET: Optional[str] = None

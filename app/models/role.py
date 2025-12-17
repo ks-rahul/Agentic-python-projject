@@ -11,8 +11,11 @@ class Role(BaseModel):
     __tablename__ = "roles"
 
     name = Column(String(255), nullable=False, unique=True)
+    display_name = Column(String(255), nullable=True)
     guard_name = Column(String(255), default="api")
     description = Column(Text, nullable=True)
+    type = Column(String(50), default="internal")  # internal or external
+    is_system_generated = Column(Boolean, default=False)
     is_active = Column(Boolean, default=True)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
 
@@ -27,13 +30,16 @@ class Permission(BaseModel):
 
     name = Column(String(255), nullable=False, unique=True)
     guard_name = Column(String(255), default="api")
+    display_name = Column(String(255), nullable=True)
     description = Column(Text, nullable=True)
     module = Column(String(100), nullable=True)
+    app_module_id = Column(UUID(as_uuid=True), ForeignKey("app_modules.id"), nullable=True)
     is_active = Column(Boolean, default=True)
 
     # Relationships
     roles = relationship("Role", secondary="role_has_permissions", back_populates="permissions")
     users = relationship("User", secondary="model_has_permissions", back_populates="permissions")
+    app_module = relationship("AppModule", back_populates="permissions")
 
 
 class RoleHasPermission(BaseModel):

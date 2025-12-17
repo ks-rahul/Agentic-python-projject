@@ -174,9 +174,9 @@ async def logout(req: Request, current_user: dict = Depends(get_current_user)):
     logger.info("user_logged_out", user_id=user_id)
     
     # Optionally blacklist the token in Redis
-    # token = req.headers.get("Authorization", "").replace("Bearer ", "")
-    # redis = await get_redis()
-    # await redis.setex(f"blacklist:{token}", settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES * 60, "1")
+    token = req.headers.get("Authorization", "").replace("Bearer ", "")
+    redis = await get_redis()
+    await redis.setex(f"blacklist:{token}", settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES * 60, "1")
     
     return {"message": "Successfully logged out"}
 
